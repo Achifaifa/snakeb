@@ -30,6 +30,7 @@ class snake:
     """
     self.body=[[x,y]]
     self.trail=[x,y]
+    self.heads=1
 
   def grow(self):
     """
@@ -38,30 +39,48 @@ class snake:
 
     self.body.append(self.trail)
 
-  def move(self,direction=None):
+  def gonnadie(self,arena):
     """
-    Moves in a direction
+    Receives a map
+
+    Returns 1 if there is an obstacle in the way
     """
 
-    if direction==None:
-      return 
+    if movedir==None: return -1
 
-    self.trail=self.body[-1]
-    self.body=self.body[:-1]
-    try:
-      if direction=="up":     nextpos=[[self.body[0][0]-1,self.body[0][1]]]
-      elif direction=="down":   nextpos=[[self.body[0][0]+1,self.body[0][1]]]
-      elif direction=="left":   nextpos=[[self.body[0][0],self.body[0][1]-1]]
-      elif direction=="right":  nextpos=[[self.body[0][0],self.body[0][1]+1]]
-    except IndexError: 
-      return
-    self.body=nextpos+self.body
+    if movedir=="up" : 
+      return 1 if arena.space[self.body[0][1]-1][self.body[0][0]] in ["A", "O"] else 0
+    if movedir=="down" : 
+      return 1 if arena.space[self.body[0][1]+1][self.body[0][0]] in ["A", "O"] else 0
+    if movedir=="left" : 
+      return 1 if arena.space[self.body[0][1]][self.body[0][0]-1] in ["A", "O"] else 0
+    if movedir=="right": 
+      return 1 if arena.space[self.body[0][1]][self.body[0][0]+1] in ["A", "O"] else 0
+    return 0
+
+  def move(self,arena):
+    """
+    Moves in a movedir
+    """
+
+    if movedir==None: return -1
+    if not self.gonnadie(arena) and movedir:
+      if   movedir=="up"    : nextpos=[[self.body[0][0]   ,self.body[0][1]-1]]
+      elif movedir=="down"  : nextpos=[[self.body[0][0]   ,self.body[0][1]+1]]
+      elif movedir=="left"  : nextpos=[[self.body[0][0]-1 ,self.body[0][1]  ]]
+      elif movedir=="right" : nextpos=[[self.body[0][0]+1 ,self.body[0][1]  ]]
+      self.trail=self.body[-1]
+      self.body=self.body[:-1]
+      self.body=nextpos+self.body
+      return 1
+    return -1
 
 # Flow control variables
 timepool=0
 previoustime=time.time()
 # Other variables
 lastpressed=""
+movedir=""
 
 #Auxiliiar functions
 def draw(arena,player):
@@ -97,7 +116,7 @@ def loopmanage():
   global timepool
   global previoustime
 
-  timepool=0 if timepool*1000>=50 else timepool+time.time()-previoustime
+  timepool=0 if timepool*1000>=250 else timepool+time.time()-previoustime
   previoustime=time.time()
   return not timepool
 
@@ -125,6 +144,7 @@ def mainloop(arena,player):
   """
 
   global lastpressed
+  global movedir
 
   cyclekey=pressed()
   if   cyclekey=="w": lastpressed="up1"     # W in querty
@@ -136,11 +156,17 @@ def mainloop(arena,player):
   elif cyclekey=="e": lastpressed="down2"   # K in querty
   elif cyclekey=="i": lastpressed="right2"  # L in querty
   elif cyclekey==" ": lastpressed="split"
-  elif cyclekey=="q": lastpressed="quit"
+  elif cyclekey=="q": os.system('clear'); exit()
 
 
   if loopmanage():
     os.system('clear')
+    #move player using the lastpressed info
+    if lastpressed[:-1] in ["up", "down", "left", "right"]:
+      movedir=lastpressed[:-1]
+    if player.heads==1:
+      player.move(arena)
+
     draw(arena,player)
     print lastpressed
 
