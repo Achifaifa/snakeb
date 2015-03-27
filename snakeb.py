@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import random, time
+import os, random, time
 
 class sand:
   """
@@ -57,33 +57,63 @@ class snake:
       return
     self.body=nextpos+self.body
 
+# Flow control variables
+timepool=0
+previoustime=time.time()
+
+#Auxiliiar functions
 def draw(arena,player):
+  """
+  Draws the game field from the arena and player data
+
+  Also prints a line with info
+  """
+
   drawmatrix=arena.space
   for i in player.body:
     drawmatrix[i[1]][i[0]]="O"
   for i in drawmatrix:
     print "".join(i)
+  print timepool,time.time()
 
 def newgame():
   """
   Creates a new game
   """
+
   arena=sand(40,20)
   while 1:
     tempx,tempy=random.randrange(40),random.randrange(20)
     if arena.space[tempy][tempx]==".": player=snake(tempx,tempy); break
   return arena,player
 
+def loopmanage():
+  """
+  Internally manages the main game loop cycles 
+  """
+
+  global timepool
+  global previoustime
+
+  timepool+=(time.time()-previoustime)
+  if timepool*1000>=50: timepool=0
+  previoustime=time.time()
+  return 1 if timepool==0 else 0
 
 def mainloop(arena,player):
   """
   Main game loop
   """
 
-  draw(arena,player)
+  if loopmanage():
+    os.system('clear')
+    draw(arena,player)
 
-
-
+# Launch code
 if __name__=="__main__":
+  
   arena,player=newgame()
-  mainloop(arena,player)
+  os.system('clear')
+  draw(arena,player)
+  while 1:
+    mainloop(arena,player)
