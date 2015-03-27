@@ -103,18 +103,18 @@ def loopmanage():
 
 def pressed():
   """
-  Returns 1 if key is pressed
+  Returns a pressed key (Supposedly non-blocking)
   """
 
   def isData():
-    return select.select([sys.stdin], [], [], 0)==([sys.stdin], [], [])
+    return select.select([sys.stdin], [], [], 0.001)==([sys.stdin], [], [])
 
+  c=""
   old_settings=termios.tcgetattr(sys.stdin)
   try:
     tty.setcbreak(sys.stdin.fileno())
-    print isData()
-    # if isData():
-    c=sys.stdin.read(1)
+    if isData():
+      c=sys.stdin.read(1)
   finally:
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
     return c
