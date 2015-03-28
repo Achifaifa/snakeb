@@ -32,13 +32,6 @@ class snake:
     self.trail=[x,y]
     self.heads=1
 
-  def grow(self):
-    """
-    Adds the trail position to the snake
-    """
-
-    self.body.append(self.trail)
-
   def gonnadie(self,arena):
     """
     Receives a map
@@ -49,13 +42,29 @@ class snake:
     if movedir==None: return -1
 
     if movedir=="up" : 
-      return 1 if arena.space[self.body[0][1]-1][self.body[0][0]] in ["A", "O"] else 0
+      if arena.space[self.body[0][1]-1][self.body[0][0]] in ["A", "O"] or self.body[0][1]-1<0 :
+        return 1 
+      elif arena.space[self.body[0][1]-1][self.body[0][0]]=="8":
+        return 2
+      return 0
     if movedir=="down" : 
-      return 1 if arena.space[self.body[0][1]+1][self.body[0][0]] in ["A", "O"] else 0
+      if arena.space[self.body[0][1]+1][self.body[0][0]] in ["A", "O"] or self.body[0][1]+1>39:
+        return 1 
+      elif arena.space[self.body[0][1]+1][self.body[0][0]]=="8":
+        return 2
+      return  0
     if movedir=="left" : 
-      return 1 if arena.space[self.body[0][1]][self.body[0][0]-1] in ["A", "O"] else 0
+      if arena.space[self.body[0][1]][self.body[0][0]-1] in ["A", "O"] or self.body[0][0]-1<0 :
+        return 1 
+      elif arena.space[self.body[0][1]][self.body[0][0]-1]=="8":
+        return 2
+      return 0
     if movedir=="right": 
-      return 1 if arena.space[self.body[0][1]][self.body[0][0]+1] in ["A", "O"] else 0
+      if arena.space[self.body[0][1]][self.body[0][0]+1] in ["A", "O"] or self.body[0][0]+1>39:
+        return 1 
+      elif arena.space[self.body[0][1]][self.body[0][0]+1]=="8":
+        return 2
+      return  0
     return 0
 
   def move(self,arena):
@@ -64,14 +73,21 @@ class snake:
     """
 
     if movedir==None: return -1
-    if not self.gonnadie(arena) and movedir:
+    deadsoon=self.gonnadie(arena)
+    if deadsoon!=1 and movedir:
       if   movedir=="up"    : nextpos=[[self.body[0][0]   ,self.body[0][1]-1]]
       elif movedir=="down"  : nextpos=[[self.body[0][0]   ,self.body[0][1]+1]]
       elif movedir=="left"  : nextpos=[[self.body[0][0]-1 ,self.body[0][1]  ]]
       elif movedir=="right" : nextpos=[[self.body[0][0]+1 ,self.body[0][1]  ]]
       self.trail=self.body[-1]
-      self.body=self.body[:-1]
       self.body=nextpos+self.body
+      if deadsoon!=2:
+        self.body=self.body[:-1]
+      if deadsoon==2:
+        while 1:
+          randomx=random.randrange(40)
+          randomy=random.randrange(20)
+          if arena.space[randomy][randomx]==".": arena.space[randomy][randomx]="8";break
       return 1
     return -1
 
@@ -90,12 +106,14 @@ def draw(arena,player):
   Also prints a line with info
   """
 
-  drawmatrix=arena.space
+  drawmat=arena.space
   for i in player.body:
-    drawmatrix[i[1]][i[0]]="O"
-  for i in drawmatrix:
+    drawmat[i[1]][i[0]]="O"
+  for i in drawmat:
     print "".join(i)
+  drawmat[player.trail[1]][player.trail[0]]="."
   print time.time()
+  print player.body
 
 def newgame():
   """
@@ -166,7 +184,6 @@ def mainloop(arena,player):
       movedir=lastpressed[:-1]
     if player.heads==1:
       player.move(arena)
-
     draw(arena,player)
     print lastpressed
 
