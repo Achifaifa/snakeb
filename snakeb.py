@@ -31,6 +31,40 @@ class snake:
     self.body=[[x,y]]
     self.trail=[x,y]
     self.heads=1
+    self.child=None
+    self.movedir=""
+
+  def split(self):
+    """
+    Adds a second head to the snake
+    """
+
+    self.heads=2
+    if self.movedir in ["left", "right"]:
+      self.child=snake(self.body[0][0],self.body[0][1]+1)
+      self.child.movedir="up"
+    else: 
+      self.child=snake(self.body[0][0]+1,self.body[0][1])
+      self.child.movedir="left"
+
+  def merge(self):
+    """
+    Joins two snakes together
+    """
+
+    if self.child.body[0]==self.trail:
+      self.heads=1
+      self.trail=self.child.trail
+      self.body+=self.child.body
+      self.child=None
+      return 1
+
+    if self.body[0]==self.child.trail:
+      self.heads=1
+      self.body=self.child.body+self.body
+      self.child=None
+      return 1
+    return 0
 
   def gonnadie(self,arena):
     """
@@ -39,27 +73,27 @@ class snake:
     Returns 1 if there is an obstacle in the way
     """
 
-    if movedir==None: return -1
+    if self.movedir==None: return -1
 
-    if movedir=="up" : 
+    if self.movedir=="up" : 
       if arena.space[self.body[0][1]-1][self.body[0][0]] in ["A", "O"] or self.body[0][1]-1<0 :
         return 1 
       elif arena.space[self.body[0][1]-1][self.body[0][0]]=="8":
         return 2
       return 0
-    if movedir=="down" : 
+    if self.movedir=="down" : 
       if arena.space[self.body[0][1]+1][self.body[0][0]] in ["A", "O"] or self.body[0][1]+1>39:
         return 1 
       elif arena.space[self.body[0][1]+1][self.body[0][0]]=="8":
         return 2
       return  0
-    if movedir=="left" : 
+    if self.movedir=="left" : 
       if arena.space[self.body[0][1]][self.body[0][0]-1] in ["A", "O"] or self.body[0][0]-1<0 :
         return 1 
       elif arena.space[self.body[0][1]][self.body[0][0]-1]=="8":
         return 2
       return 0
-    if movedir=="right": 
+    if self.movedir=="right": 
       if arena.space[self.body[0][1]][self.body[0][0]+1] in ["A", "O"] or self.body[0][0]+1>39:
         return 1 
       elif arena.space[self.body[0][1]][self.body[0][0]+1]=="8":
@@ -72,13 +106,13 @@ class snake:
     Moves in a movedir
     """
 
-    if movedir==None: return -1
+    if self.movedir==None: return -1
     deadsoon=self.gonnadie(arena)
-    if deadsoon!=1 and movedir:
-      if   movedir=="up"    : nextpos=[[self.body[0][0]   ,self.body[0][1]-1]]
-      elif movedir=="down"  : nextpos=[[self.body[0][0]   ,self.body[0][1]+1]]
-      elif movedir=="left"  : nextpos=[[self.body[0][0]-1 ,self.body[0][1]  ]]
-      elif movedir=="right" : nextpos=[[self.body[0][0]+1 ,self.body[0][1]  ]]
+    if deadsoon!=1 and self.movedir:
+      if   self.movedir=="up"    : nextpos=[[self.body[0][0]   ,self.body[0][1]-1]]
+      elif self.movedir=="down"  : nextpos=[[self.body[0][0]   ,self.body[0][1]+1]]
+      elif self.movedir=="left"  : nextpos=[[self.body[0][0]-1 ,self.body[0][1]  ]]
+      elif self.movedir=="right" : nextpos=[[self.body[0][0]+1 ,self.body[0][1]  ]]
       self.trail=self.body[-1]
       self.body=nextpos+self.body
       if deadsoon!=2:
@@ -89,6 +123,8 @@ class snake:
           randomy=random.randrange(20)
           if arena.space[randomy][randomx]==".": arena.space[randomy][randomx]="8";break
       return 1
+    if deadsoon==1: 
+      if not self.merge(): gameover()
     return -1
 
 # Flow control variables
@@ -96,7 +132,6 @@ timepool=0
 previoustime=time.time()
 # Other variables
 lastpressed=""
-movedir=""
 
 #Auxiliiar functions
 def draw(arena,player):
@@ -109,11 +144,12 @@ def draw(arena,player):
   drawmat=arena.space
   for i in player.body:
     drawmat[i[1]][i[0]]="O"
+  if player.heads==2:
+    for i in player.child.body:
+      drawmat[i[1]][i[0]]="O"
   for i in drawmat:
     print "".join(i)
   drawmat[player.trail[1]][player.trail[0]]="."
-  print time.time()
-  print player.body
 
 def newgame():
   """
@@ -144,7 +180,7 @@ def pressed():
   """
 
   def isData():
-    return select.select([sys.stdin], [], [], 0.001)==([sys.stdin], [], [])
+    return select.select([sys.stdin], [], [], 0.01)==([sys.stdin], [], [])
 
   c=""
   old_settings=termios.tcgetattr(sys.stdin)
@@ -156,13 +192,20 @@ def pressed():
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
     return c
 
+def gameover():
+  """
+  Displays a game over message
+  """
+
+  raw_input("gameover")
+  exit()
+
 def mainloop(arena,player):
   """
   Main game loop
   """
 
   global lastpressed
-  global movedir
 
   cyclekey=pressed()
   if   cyclekey=="w": lastpressed="up1"     # W in querty
@@ -179,13 +222,19 @@ def mainloop(arena,player):
 
   if loopmanage():
     os.system('clear')
-    #move player using the lastpressed info
-    if lastpressed[:-1] in ["up", "down", "left", "right"]:
-      movedir=lastpressed[:-1]
     if player.heads==1:
+      if lastpressed[:-1] in ["up", "down", "left", "right"]:
+        player.movedir=lastpressed[:-1]
+      elif lastpressed=="split": player.split()
       player.move(arena)
+    else:
+      if lastpressed[-1]=="1": player.movedir=lastpressed[:-1]
+      elif lastpressed[-1]=="2": player.child.movedir=lastpressed[:-1]
+      player.move(arena)
+      player.child.move(arena)
+      if player.trail==player.child.body[0] or player.body[0]==player.child.trail:
+        player.merge()
     draw(arena,player)
-    print lastpressed
 
 # Launch code
 if __name__=="__main__":
@@ -195,5 +244,3 @@ if __name__=="__main__":
   draw(arena,player)
   while 1:
     mainloop(arena,player)
-  # while 1:
-  #   print ispressed("a")
