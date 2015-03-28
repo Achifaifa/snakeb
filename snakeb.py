@@ -52,18 +52,23 @@ class snake:
     Joins two snakes together
     """
 
+    global points
+
     if self.child.body[0]==self.trail:
       self.heads=1
       self.trail=self.child.trail
       self.body+=self.child.body
       self.child=None
       return 1
+      points+=10
 
     if self.body[0]==self.child.trail:
       self.heads=1
       self.body=self.child.body+self.body
       self.child=None
       return 1
+      points+=10
+
     return 0
 
   def gonnadie(self,arena):
@@ -115,16 +120,20 @@ class snake:
       elif self.movedir=="right" : nextpos=[[self.body[0][0]+1 ,self.body[0][1]  ]]
       self.trail=self.body[-1]
       self.body=nextpos+self.body
+
+      # End the game if not in merging condiitions
+      if deadsoon==1: gameover()
+      # No problemo
       if deadsoon!=2:
         self.body=self.body[:-1]
+      # There is food
       if deadsoon==2:
+        points+=5
         while 1:
           randomx=random.randrange(40)
           randomy=random.randrange(20)
           if arena.space[randomy][randomx]==".": arena.space[randomy][randomx]="8";break
       return 1
-    if deadsoon==1: 
-      if not self.merge(): gameover()
     return -1
 
 # Flow control variables
@@ -132,6 +141,7 @@ timepool=0
 previoustime=time.time()
 # Other variables
 lastpressed=""
+points=0
 
 #Auxiliiar functions
 def draw(arena,player):
@@ -144,12 +154,16 @@ def draw(arena,player):
   drawmat=arena.space
   for i in player.body:
     drawmat[i[1]][i[0]]="O"
-  if player.heads==2:
-    for i in player.child.body:
-      drawmat[i[1]][i[0]]="O"
   for i in drawmat:
     print "".join(i)
   drawmat[player.trail[1]][player.trail[0]]="."
+  if player.heads==2:
+    for i in player.child.body:
+      drawmat[i[1]][i[0]]="O"
+    drawmat[player.child.trail[1]][player.child.trail[0]]="."
+
+  
+  print points,"points"
 
 def newgame():
   """
@@ -170,7 +184,7 @@ def loopmanage():
   global timepool
   global previoustime
 
-  timepool=0 if timepool*1000>=250 else timepool+time.time()-previoustime
+  timepool=0 if timepool*1000>=300 else timepool+time.time()-previoustime
   previoustime=time.time()
   return not timepool
 
@@ -206,6 +220,7 @@ def mainloop(arena,player):
   """
 
   global lastpressed
+  global points
 
   cyclekey=pressed()
   if   cyclekey=="w": lastpressed="up1"     # W in querty
@@ -221,15 +236,20 @@ def mainloop(arena,player):
 
 
   if loopmanage():
+
     os.system('clear')
     if player.heads==1:
+      if player.movedir: points+=1
       if lastpressed[:-1] in ["up", "down", "left", "right"]:
         player.movedir=lastpressed[:-1]
-      elif lastpressed=="split": player.split()
+      elif lastpressed=="split": 
+        player.split()
+        player.child.move(arena)
       player.move(arena)
     else:
-      if lastpressed[-1]=="1": player.movedir=lastpressed[:-1]
-      elif lastpressed[-1]=="2": player.child.movedir=lastpressed[:-1]
+      points+=2
+      if lastpressed[-1]=="1":    player.movedir=lastpressed[:-1]
+      elif lastpressed[-1]=="2":  player.child.movedir=lastpressed[:-1]
       player.move(arena)
       player.child.move(arena)
       if player.trail==player.child.body[0] or player.body[0]==player.child.trail:
