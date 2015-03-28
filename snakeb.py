@@ -232,12 +232,12 @@ def mainloop(arena,player):
   elif cyclekey=="e": lastpressed="down2"   # K in querty
   elif cyclekey=="i": lastpressed="right2"  # L in querty
   elif cyclekey==" ": lastpressed="split"
-  elif cyclekey=="q": os.system('clear'); exit()
+  elif cyclekey=="q": os.system('tput clear'); exit()
 
 
   if loopmanage():
 
-    os.system('clear')
+    os.system('tput clear')
     if player.heads==1:
       if player.movedir: points+=1
       if lastpressed[:-1] in ["up", "down", "left", "right"]:
@@ -260,7 +260,7 @@ def mainloop(arena,player):
 if __name__=="__main__":
   
   arena,player=newgame()
-  os.system('clear')
+  os.system('tput clear')
   draw(arena,player)
   while 1:
     mainloop(arena,player)
