@@ -2,6 +2,13 @@
 
 import os, random, select, sys, termios, time, tty
 
+# Flow control variables
+timepool=0
+previoustime=time.time()
+# Other variables
+lastpressed=""
+points=0
+
 class sand:
   """
   Contains the campsite with obstacles and layout
@@ -111,6 +118,8 @@ class snake:
     Moves in a movedir
     """
 
+    global points
+
     if self.movedir==None: return -1
     deadsoon=self.gonnadie(arena)
     if deadsoon!=1 and self.movedir:
@@ -135,13 +144,6 @@ class snake:
           if arena.space[randomy][randomx]==".": arena.space[randomy][randomx]="8";break
       return 1
     return -1
-
-# Flow control variables
-timepool=0
-previoustime=time.time()
-# Other variables
-lastpressed=""
-points=0
 
 #Auxiliiar functions
 def draw(arena,player):
