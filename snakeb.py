@@ -223,7 +223,7 @@ def mainloop(arena,player):
 
   global lastpressed
   global points
-
+  previouspressed=lastpressed
   cyclekey=pressed()
   if   cyclekey=="w": lastpressed="up1"     # W in querty
   elif cyclekey=="a": lastpressed="left1"   # A in querty
